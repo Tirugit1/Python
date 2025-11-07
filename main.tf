@@ -1,25 +1,39 @@
-resource "aws_security_group" "main" {
-  name = "example_sg"
-  description = "Example security group"
+provider "aws" {
+    region = "ap-south-1"
 }
-
-resource "aws_instance" "example" {
+  variable "cidr" {
+    description = "CIDR block for security group"
+    type = string
+  }
+resource "aws_instance" "example_instance" {
     ami = "ami-00af95fa354fdb788"
-  instance_type = "t2.micro"
-  key_name = "TridevKey"
+    instance_type = "t2.micro" 
+    
+    key_name = "TridevKey"
 
-lifecycle {
-    precondition {
-      condition = aws_security_group.main.id != ""
-      error_message = "Security group ID must not be blank"
-    }
-    postcondition {
-        condition = self.public_ip !=""
-        error_message = "Public IP is not present"
-    } 
+    vpc_security_group_ids =  [aws_security_group.example_sg.id]
       
+      root_block_device {
+        volume_size = 8
+      }
+      tags = {
+        Name = "TridevInsatance"
+      }
     }
-    tags = {
-    name = "ExampleInatance"
+    resource "aws_security_group" "example_sg" {
+      name = "example_security_group"
+      description = "Allow SSH and HTTP access"
+      ingress {
+        from_port = 22
+        to_port = 22
+        protocol = "tcp"
+        cidr_blocks = [var.cidr]
     }
-}
+    ingress{
+        from_port = 80
+        to_port = 80
+        protocol = "tcp"
+        cidr_blocks = [var.cidr]
+        }
+        
+        }
