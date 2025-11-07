@@ -1,19 +1,25 @@
-provider "aws" {
-    region = "ap-south-1"
-  
+resource "aws_security_group" "main" {
+  name = "example_sg"
+  description = "Example security group"
 }
 
-resource "aws_s3_bucket" "example" {
-    bucket = "tridev-dev-buckett"
+resource "aws_instance" "example" {
+    ami = "ami-00af95fa354fdb788"
+  instance_type = "t2.micro"
+  key_name = "TridevKey"
 
-    lifecycle {
-      create_before_destroy = true
-      #prevent_destroy = false
-      #ignore_changes = [ tags ]
+lifecycle {
+    precondition {
+      condition = aws_security_group.main.id != ""
+      error_message = "Security group ID must not be blank"
+    }
+    postcondition {
+        condition = self.public_ip !=""
+        error_message = "Public IP is not present"
+    } 
       
     }
     tags = {
-        name = "MyS3Bucket"
-        Environment = "Production"
+    name = "ExampleInatance"
     }
 }
